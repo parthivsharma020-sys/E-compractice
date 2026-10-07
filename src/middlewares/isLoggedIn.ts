@@ -33,7 +33,7 @@ export const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
       return res.json("unauthorized user..");
     }
     req.user = {
-      id: `${decoded.id}`,
+      id: decoded.id,
       email: decoded.email,
       role: decoded.role,
     };

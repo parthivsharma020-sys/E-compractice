@@ -21,7 +21,7 @@ Router.post(
   wrapAsync(createProduct),
 );
 
-Router.post(
+Router.delete(
   "/products/:id/delete",
   isLoggedIn,
   authorizeRoles(UserRole.ADMIN),

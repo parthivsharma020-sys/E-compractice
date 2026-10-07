@@ -3,15 +3,13 @@ import {
   PrimaryGeneratedColumn,
   BaseEntity,
   Entity,
-  ManyToMany,
-  JoinTable,
   ManyToOne,
   JoinColumn,
+  OneToMany,
   CreateDateColumn,
 } from "typeorm";
-
-import { Product } from "./Product.js";
 import { User } from "./User.js";
+import { OrderItem } from "./Order_item.js";
 
 export enum Status {
   ACCEPTED = "accepted",
@@ -24,28 +22,20 @@ export class Order extends BaseEntity {
   id!: number;
 
   @ManyToOne(() => User, (user: User) => user.orders, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "userId" } )
+  @JoinColumn({ name: "user" })
   user!: User;
+
+  @Column({ type: "int" })
+  user_id!: number;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   total_price!: number;
 
-  // @Column({ type: "int"})
-  // Price!: number;
-
   @Column({ type: "enum", enum: Status, default: Status.ACCEPTED })
   status!: Status;
 
-  @ManyToMany(() => Product, (product: Product) => product.orders)
-  @JoinTable({
-    name: "order_items", // new table naem
-    joinColumn: { name: "orderId", referencedColumnName: "id" },
-    inverseJoinColumn: { name: "productId", referencedColumnName: "id" },
-  })
-  products!: Product[];
-
-  @Column({type:"int" ,default:1})
-  quantity!: number;
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
+  orderItems!: OrderItem[];
 
   @CreateDateColumn()
   order_date!: Date;

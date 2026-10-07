@@ -1,5 +1,5 @@
 export class ExpressError extends Error {
-  statusCode: number;
+  statusCode?: number;
 
   constructor(statusCode: number, message: string) {
     super();

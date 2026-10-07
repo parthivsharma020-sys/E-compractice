@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import "dotenv/config";
-
-import express, { type Express } from "express";
+import { type Request, type Response, type NextFunction } from "express";
+import express, { type Express} from "express";
 import { DataSource } from "typeorm";
 import { User } from "./entities/User.js";
 import { Order } from "./entities/Order.js";
@@ -13,6 +13,8 @@ import { CartItem } from "./entities/Cart_item.js";
 
 import Jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import { ExpressError } from "./utils/ExpressError.js";
+import { OrderItem } from "./entities/Order_item.js";
 
 const app: Express = express();
 
@@ -31,7 +33,7 @@ const main = async () => {
       port: port,
       password: password,
       database: "Ecom",
-      entities: [User, Order, Product,CartItem],
+      entities: [User, Order, Product,CartItem,OrderItem],
       synchronize: true,
     });
     await connection.initialize();
@@ -41,6 +43,12 @@ const main = async () => {
     app.use(orderRouter);
     app.use(productRouter);
 
+    app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+      
+  let { statusCode = 500, message = "something went wrong" } = err as ExpressError;
+
+   throw new ExpressError(statusCode, message);
+ });
     app.listen(3000, () => {
       console.log("Server is running on port 3000");
     });
