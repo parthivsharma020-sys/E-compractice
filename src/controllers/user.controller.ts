@@ -6,6 +6,7 @@ import { User } from "../entities/User.js";
 import bcrypt from "bcrypt";
 import { userSchema } from "../validator/product.validator.js";
 import { ExpressError } from "../utils/ExpressError.js";
+import { getPagination } from "../utils/Pagination.js";
 
 export const registerUser = async (req: Request, res: Response) => {
   const { error, value } = userSchema.validate(req.body);
@@ -85,7 +86,7 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 export const logoutUser = (req: Request, res: Response) => {
   res.cookie("token", "");
-  res.json("user logged out");
+  res.status(204).json("user logged out");
 };
 
 export const updateUser = async (req: Request, res: Response) => {
@@ -143,22 +144,27 @@ export const deleteUser = async (req: Request, res: Response) => {
 
   const user: any = await User.findOneBy(tok?.id);
   if ((user.is_active = false || !user)) {
-    throw new ExpressError(404, "unauthorized access");
+    throw new ExpressError(404, "user doesn't exist");
   }
   user.is_active = false;
   await user.save();
   // const Duser = await User.delete(user.id);
 
-  res.json(user);
+  res.status(204).json(user);
 };
 export const getAllUsers = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const users = await User.find();
+  let { page, limit, skip } = getPagination(req.query);
+  const users = await User.find({
+    skip,
+    take:limit,
+  });
+
   if (!users) {
-    throw new ExpressError(404, "internal error");
+    throw new ExpressError(404, "Not found");
   }
   res.status(200).json(users);
 };

@@ -24,7 +24,7 @@ export class OrderItem extends BaseEntity {
   @JoinColumn({ name: "orderId" })
   order!: Order;
 
-  @ManyToOne(() => Product, { onDelete: "CASCADE" })
+  @ManyToOne(() => Product, { onDelete: "SET NULL",nullable:true })
   @JoinColumn({ name: "productId" })
   product!: Product;
 }
