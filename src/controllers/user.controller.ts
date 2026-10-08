@@ -50,28 +50,28 @@ export const registerUser = async (req: Request, res: Response) => {
   });
   await user.save();
   res.cookie("token", token);
-  return res.json(user);
+  return res.status(200).json(user);
 };
 export const loginUser = async (req: Request, res: Response) => {
   let { email, password } = req.body;
   if (!email || !password) {
-    throw new ExpressError(404, "provide email and password");
+    throw new ExpressError(400, "provide email and password");
   }
   const key: any = password;
   const user = await User.findOne({ where: { email } });
   // console.log(user);
 
   if (!user || !user.password) {
-    throw new ExpressError(404, "invalid creadintion");
+    throw new ExpressError(400, "invalid creadintion");
   }
   const login: boolean = await bcrypt.compare(key, user?.password);
 
   if (!login) {
-    throw new ExpressError(404, "creadintion not match..");
+    throw new ExpressError(400, "creadintion not match..");
   }
   const secret = process.env.NODE_ENV_JWTSEC;
   if (!secret) {
-    throw new ExpressError(404, "unauthorized access");
+    throw new ExpressError(400, "unauthorized access");
   }
   const token: any = jwt.sign({ id: user.id, role: user.role }, secret, {
     expiresIn: "15h",
