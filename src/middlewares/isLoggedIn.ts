@@ -4,6 +4,7 @@ import { User } from "../entities/User.js";
 import { UserRole } from "../entities/User.js";
 import { type Request, type Response, type NextFunction } from "express";
 import { error } from "node:console";
+import { ExpressError } from "../utils/ExpressError.js";
 
 export enum role {
   USER = "user",
@@ -21,16 +22,16 @@ export const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   try {
     const token = req.cookies?.token;
     if (!token) {
-      return res.status(401).json("unauthorized access");
+      throw new ExpressError(404, "unauthorize access");
     }
     const sec = process.env.NODE_ENV_JWTSEC;
     if (!sec) {
-      throw new Error("node env not here");
+      throw new ExpressError(500, "internal server error");
     }
     const decoded = jwt.verify(token, sec) as JwtPayload;
     console.log(decoded);
     if (!decoded) {
-      return res.json("unauthorized user..");
+      throw new ExpressError(404,"invalid creadintion")
     }
     req.user = {
       id: decoded.id,
@@ -44,24 +45,23 @@ export const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
 };
 
 export const authorizeRoles = (...allowRoles: string[]) => {
- return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    try {
-      if (!req.user || !req.user.role) {
-        res.status(401).json(" User context missing");
-        return;
-      }
-      const per = allowRoles.includes(req.user.role);
-
-      if (!per) {
-        res.status(403).json("Access denied : Insufficient permission");
-        return;
-      }
-      console.log(req.user.log);
-      // console.log(per);
-      return next();
-    } catch (er) {
-      // console.log(er);
-      res.status(500).json("server error");
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    if (!req.user || !req.user.role) {
+      res.status(401).json(" User context missing");
+      return;
     }
+    const per = allowRoles.includes(req.user.role);
+
+    if (!per) {
+      res.status(403).json("Access denied : Insufficient permission");
+      return;
+    }
+    console.log(req.user.log);
+    // console.log(per);
+    return next();
   };
 };

@@ -17,6 +17,9 @@ export class OrderItem extends BaseEntity {
   @Column({ type: "int", default: 1 })
   quantity!: number; 
 
+  @Column({ type: "decimal", default: 0 })
+  price!:number
+
   @ManyToOne(() => Order, (order) => order.orderItems, { onDelete: "CASCADE" })
   @JoinColumn({ name: "orderId" })
   order!: Order;

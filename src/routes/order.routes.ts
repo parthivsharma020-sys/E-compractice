@@ -3,17 +3,19 @@ import express, {
   type Request,
   type NextFunction,
 } from "express";
-import { getOrders } from "../controllers/order.controller.js";
-import wrapAsync from "../utils/wrapAsync.js"
+import {
+  addToOrder,
+  cancelOrder,
+  getOrders,
+} from "../controllers/order.controller.js";
+import wrapAsync from "../utils/wrapAsync.js";
 const Router = express.Router();
-import { Order } from "../entities/Order.js";
-// import jwt from "jsonwebtoken";
-import { User } from "../entities/User.js";
 import { isLoggedIn } from "../middlewares/isLoggedIn.js";
 
+Router.get("/:userId", isLoggedIn, wrapAsync(getOrders));
 
-Router.get("/:userId/orders", isLoggedIn ,wrapAsync(getOrders));
+Router.post("/:userId", isLoggedIn, wrapAsync(addToOrder));
 
-
+Router.delete("/:userId", isLoggedIn, wrapAsync(cancelOrder));
 
 export default Router;

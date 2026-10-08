@@ -6,13 +6,15 @@ import { DataSource } from "typeorm";
 import { User } from "./entities/User.js";
 import { Order } from "./entities/Order.js";
 import { Product } from "./entities/Product.js";
+import cartRouter from "./routes/cart.routes.js"
 import userRouter from "./routes/user.routes.js";
 import orderRouter from "./routes/order.routes.js";
 import productRouter from "./routes/product.routes.js";
 import { CartItem } from "./entities/Cart_item.js";
 
-import Jwt from "jsonwebtoken";
+// import Jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+
 import { ExpressError } from "./utils/ExpressError.js";
 import { OrderItem } from "./entities/Order_item.js";
 
@@ -39,15 +41,16 @@ const main = async () => {
     await connection.initialize();
     console.log(`connection On ${process.env.NODE_ENV_PORT}`);
 
-    app.use("/users",userRouter);
-    app.use(orderRouter);
-    app.use(productRouter);
+    app.use("/api/users",userRouter);
+    app.use("/api/orders", orderRouter);
+    app.use("/api/carts", cartRouter);
+    app.use("/api/products",productRouter);
 
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
       
   let { statusCode = 500, message = "something went wrong" } = err as ExpressError;
 
-   throw new ExpressError(statusCode, message);
+      res.status(statusCode).send(message);
  });
     app.listen(3000, () => {
       console.log("Server is running on port 3000");

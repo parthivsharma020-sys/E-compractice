@@ -34,6 +34,7 @@ export class Product extends BaseEntity {
  
   @Column({ type: "text", nullable: true })
   colors!: string[];
+  
   @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
   orderItems!: OrderItem[];
 }

@@ -9,30 +9,30 @@ import {
   getAllProducts,
   updateProduct,
 } from "../controllers/product.controller.js";
-import { type Request, type Response, type NextFunction } from "express";
+
 import wrapAsync from "../utils/wrapAsync.js";
 
 Router.get("/", wrapAsync(getAllProducts));
 
 Router.post(
-  "/products/create-product",
+  "/creates",
   isLoggedIn,
   authorizeRoles("admin", "manager"),
   wrapAsync(createProduct),
 );
 
 Router.delete(
-  "/products/:id/delete",
+  "/:id",
   isLoggedIn,
   authorizeRoles(UserRole.ADMIN),
   wrapAsync(deleteProduct),
 );
 
 Router.post(
-  "/products/:id/updates",
+  "/:id",
   isLoggedIn,
   authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
- wrapAsync(updateProduct)
+  wrapAsync(updateProduct),
 );
 
 export default Router;
