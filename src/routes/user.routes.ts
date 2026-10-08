@@ -3,10 +3,11 @@ const Router = express.Router();
 import { type Request, type Response, type NextFunction } from "express";
 
 import { Product } from "../entities/Product.js";
-import { isLoggedIn } from "../middlewares/isLoggedIn.js";
+import { authorizeRoles, isLoggedIn } from "../middlewares/isLoggedIn.js";
 import wrapAsync from "../utils/wrapAsync.js";
 import {
   deleteUser,
+  getAllUsers,
   loginUser,
   logoutUser,
   registerUser,
@@ -19,18 +20,27 @@ import {
   cancelOrder,
   usersCart,
 } from "../controllers/order.controller.js";
+import { UserRole } from "../entities/User.js";
 
 Router.get("/", async (req: Request, res: Response) => {
-  try {
-    const products = await Product.find();
+  const products = await Product.find();
+  const safeProducts = products.map((p) => ({
+    name: p.name,
+    price: p.price,
+    category: p.category,
+    Description: p.Description,
+  }));
 
-    res.json(products);
-  } catch (error) {
-    console.log(error);
-  }
+  res.json(safeProducts);
 });
+Router.get(
+  "/get-users",
+  isLoggedIn,
+  authorizeRoles(UserRole.ADMIN, UserRole.MANAGER),
+  wrapAsync(getAllUsers),
+); 
 
-Router.post("/register", wrapAsync(registerUser));
+ Router.post("/register", wrapAsync(registerUser));
 
 Router.post("/login", wrapAsync(loginUser));
 

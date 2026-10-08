@@ -4,39 +4,48 @@ import { Order } from "../entities/Order.js";
 import { User } from "../entities/User.js";
 import { Product } from "../entities/Product.js";
 import { ExpressError } from "../utils/ExpressError.js";
+import { ProductSchema } from "../validator/product.validator.js";
+import { type productType } from "../entities/Product.js";
+import { error } from "node:console";
+import { skip } from "node:test";
 
 export const getAllProducts = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
-  const products = await Product.find();
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  const skip = (page - 1) * limit;
+  const products = await Product.find({
+    skip,
+    take: limit,
+    // order: {
+    //   id: "DESC",
+    // },
+  });
   if (!products) {
     throw new ExpressError(204, "not content availabel");
   }
-  console.log(...products);
+  
+  
   res.status(200).json(products);
 };
 
 export const createProduct = async (req: Request, res: Response) => {
-  let { name, price, stock, Description, colors, category, discount } =
-    req.body;
-  if (!name || !price || !stock || !Description) {
-    throw new ExpressError(400, "provide all field");
-    return res.json("fill the required field..");
+  let { error, value } = ProductSchema.validate(req.body);
+
+  if (error) {
+    throw new ExpressError(400, `${error}`);
   }
+  // const { name, price, stock, Description, colors, category, discount } = value;
 
-  const created_product = await Product.create({
-    name,
-    price,
-    stock,
-    Description,
-    colors,
-    category,
-    discount,
-  }).save();
+  const products = Product.create(value);
 
-  return res.json(created_product);
+  const savedProducts = await Product.save(products);
+
+  return res.json(savedProducts);
 };
 export const deleteProduct = async (
   req: Request,

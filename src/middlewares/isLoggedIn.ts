@@ -31,7 +31,7 @@ export const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
     const decoded = jwt.verify(token, sec) as JwtPayload;
     console.log(decoded);
     if (!decoded) {
-      throw new ExpressError(404,"invalid creadintion")
+      throw new ExpressError(404, "invalid creadintion");
     }
     req.user = {
       id: decoded.id,
@@ -55,7 +55,7 @@ export const authorizeRoles = (...allowRoles: string[]) => {
       return;
     }
     const per = allowRoles.includes(req.user.role);
-
+    console.log(req.user.role);
     if (!per) {
       res.status(403).json("Access denied : Insufficient permission");
       return;

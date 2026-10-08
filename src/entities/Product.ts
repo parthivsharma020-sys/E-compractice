@@ -8,6 +8,17 @@ import {
 import { OrderItem } from "./Order_item.js";
 // import { OrderItem } from "./Order_item.js";
 
+ export interface productType{
+  name: string,
+  price: number,
+  stock: number,
+  Description: string,
+  colors: string,
+  category: string,
+  discount:number
+    
+}
+
 @Entity("product")
 export class Product extends BaseEntity {
   @PrimaryGeneratedColumn({ type: "int" })
@@ -34,7 +45,7 @@ export class Product extends BaseEntity {
  
   @Column({ type: "text", nullable: true })
   colors!: string[];
-  
+
   @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
   orderItems!: OrderItem[];
 }

@@ -12,7 +12,7 @@ import {
 
 import wrapAsync from "../utils/wrapAsync.js";
 
-Router.get("/", wrapAsync(getAllProducts));
+Router.get("/", isLoggedIn,authorizeRoles(UserRole.ADMIN,UserRole.MANAGER),wrapAsync(getAllProducts));
 
 Router.post(
   "/creates",

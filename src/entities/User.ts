@@ -27,15 +27,16 @@ export class User extends BaseEntity {
 
   @Column({ type: "varchar" })
   first_name!: string;
-
+  
+  @Column({ type: "varchar" })
+  last_name!: string;
+  
   @Column({ type: "varchar", nullable: false })
   password!: string;
 
   @Column({ type: "enum", enum: UserRole, default: UserRole.USER })
   role!: UserRole;
 
-  @Column({ type: "varchar" })
-  last_name!: string;
 
   @Column({ type: "varchar", length: 20, nullable: true })
   phone_number!: string;

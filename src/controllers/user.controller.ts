@@ -4,17 +4,25 @@ import { type Request, type Response, type NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { User } from "../entities/User.js";
 import bcrypt from "bcrypt";
-// import { Product } from "../entities/Product.js";
-// import { type JwtPayload } from "jsonwebtoken";
-// import { isLoggedIn } from "../middlewares/isLoggedIn.js";
-// import { Order } from "../entities/Order.js";
-// // import "dotenv/config"
-// import { CartItem } from "../entities/Cart_item.js";
-// import { Status } from "../entities/Order.js";
+import { userSchema } from "../validator/product.validator.js";
 import { ExpressError } from "../utils/ExpressError.js";
 
 export const registerUser = async (req: Request, res: Response) => {
-  let { fName, lName, PN, email, password, role } = req.body;
+  const { error, value } = userSchema.validate(req.body);
+
+  if (error) {
+    throw new ExpressError(404, `${error}`);
+  }
+
+  const {
+    first_name,
+    last_name,
+    email,
+    password,
+    phone_number,
+    address,
+    role,
+  } = value;
 
   let pre = await User.findOne({ where: { email } });
   if (pre) {
@@ -25,11 +33,12 @@ export const registerUser = async (req: Request, res: Response) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
   const user = User.create({
-    first_name: fName,
-    last_name: lName,
+    first_name: first_name,
+    last_name: last_name,
     email,
+    address,
     role,
-    phone_number: PN,
+    phone_number: phone_number,
     password: hashedPassword,
   });
   const secret = process.env.NODE_ENV_JWTSEC;
@@ -113,8 +122,9 @@ export const updateUser = async (req: Request, res: Response) => {
 export const deleteUser = async (req: Request, res: Response) => {
   // let { fName, lName, PN, email, password } = req.body;
   const userId = req.params.userId;
+
   if (userId != req?.user?.id) {
-    throw new ExpressError(403, "something went wrong");
+    throw new ExpressError(403, "unaothorized action..");
   }
   const token = req.cookies?.token;
 
@@ -132,11 +142,23 @@ export const deleteUser = async (req: Request, res: Response) => {
   // console.log(id);
 
   const user: any = await User.findOneBy(tok?.id);
-  if (!user) {
+  if ((user.is_active = false || !user)) {
     throw new ExpressError(404, "unauthorized access");
   }
+  user.is_active = false;
+  await user.save();
+  // const Duser = await User.delete(user.id);
 
-  const Duser = await User.delete(user.id);
-
-  res.json(Duser);
+  res.json(user);
+};
+export const getAllUsers = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const users = await User.find();
+  if (!users) {
+    throw new ExpressError(404, "internal error");
+  }
+  res.status(200).json(users);
 };
