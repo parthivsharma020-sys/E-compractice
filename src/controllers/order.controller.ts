@@ -5,6 +5,7 @@ import { User } from "../entities/User.js";
 import { Product } from "../entities/Product.js";
 import { ExpressError } from "../utils/ExpressError.js";
 import { CartItem } from "../entities/Cart_item.js";
+import { AppDataSource } from "../index.js";
 import { error } from "node:console";
 import { OrderItem } from "../entities/Order_item.js";
 
@@ -36,59 +37,71 @@ export const addToOrder = async (
   const items = req.body.items;
 
   const userId = Number(req?.user?.id);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    throw new ExpressError(401, "Invalid user");
+  }
   console.log(items);
+
   if (items.length <= 0) {
     throw new ExpressError(400, "order item required");
   }
-  let totalPrice = 0;
-  const orderItemsToSave: OrderItem[] = [];
+  const order = await AppDataSource.transaction(async (manager) => {
+    const user = await manager.findOne(User, {
+      where: { id: userId },
+      relations: { cart: true },
+    });
+    if (!user) {
+      throw new ExpressError(404, "user not found");
+    }
 
-  const user = await User.findOne({
-    where: { id: userId },
-    relations: { cart: true },
+    let totalPrice = 0;
+    const orderItemsToSave: OrderItem[] = [];
+
+    for (const item of items) {
+      const productId = Number(item.productId);
+      const quantity = Number(item.quantity);
+      if (!Number.isInteger(productId) || productId <= 0) {
+        throw new ExpressError(400, "Invalid product ID");
+      }
+
+      if (!Number.isInteger(quantity) || quantity <= 0) {
+        throw new ExpressError(400, "Invalid quantity");
+      }
+      const product = await manager.findOne(Product, {
+        where: { id: productId },
+        lock: { mode: "pessimistic_write" },
+      });
+      // if here we only find then it make some error
+
+      if (!product) {
+        throw new ExpressError(404, "item not found");
+      }
+
+      if (product.stock < quantity) {
+        throw new ExpressError(400, "insufficient item reduce quantity");
+      }
+      product.stock -= quantity;
+      await manager.save(Product, product);
+
+      const price = Number(product.price);
+      totalPrice += Number(product.price) * quantity;
+
+      const newOrderItem = new OrderItem();
+      newOrderItem.product = product;
+      newOrderItem.quantity = quantity;
+      newOrderItem.price = price;
+      orderItemsToSave.push(newOrderItem);
+    }
+    const order = new Order();
+    order.user = { id: userId } as User;
+    order.user_id = userId;
+    order.status = Status.ACCEPTED;
+    order.total_price = totalPrice;
+    order.orderItems = orderItemsToSave;
+    return await manager.save(Order, order);
+    // await order.save();
   });
-  if (!user) {
-    throw new ExpressError(404, "user not found");
-  }
-  for (const item of items) {
-    const productId = Number(item.productId);
-    const quantity = Number(item.quantity);
-    if (!Number.isInteger(productId) || productId <= 0) {
-      throw new ExpressError(400, "Invalid product ID");
-    }
-
-    if (!Number.isInteger(quantity) || quantity <= 0) {
-      throw new ExpressError(400, "Invalid quantity");
-    }
-    const product = await Product.findOne({ where: { id: productId } });
-    // if here we only find then it make some error
-
-    if (!product) {
-      throw new ExpressError(404, "item not found");
-    }
-
-    if (product.stock < quantity) {
-      throw new ExpressError(400, "insufficient item reduce quantity");
-    }
-    product.stock -= quantity;
-    await product.save();
-    const price = Number(product.price);
-    totalPrice += Number(product.price) * quantity;
-
-    const newOrderItem = new OrderItem();
-    newOrderItem.product = product;
-    newOrderItem.quantity = quantity;
-    newOrderItem.price = price;
-    orderItemsToSave.push(newOrderItem);
-  }
-  const order = new Order();
-  order.user = { id: userId } as User;
-  order.user_id = userId;
-  order.status = Status.ACCEPTED;
-  order.total_price = totalPrice;
-  order.orderItems = orderItemsToSave;
-  await order.save();
-  return res.status(200).json(order);
+  return res.status(201).json({ message: "order placed successfully", order });
 };
 
 export const usersCart = async (
@@ -97,6 +110,10 @@ export const usersCart = async (
   next: NextFunction,
 ) => {
   const userId = Number(req.params.userId);
+
+  if (userId != req.user?.id) {
+    throw new ExpressError(404, "user not found");
+  }
 
   const user = await User.find({ where: { id: userId } });
   if (!user) {
