@@ -21,12 +21,12 @@ export class Order extends BaseEntity {
   @PrimaryGeneratedColumn({ type: "int" })
   id!: number;
 
-  @ManyToOne(() => User, (user: User) => user.orders, { onDelete: "CASCADE" })
+  @ManyToOne(() => User, (user: User) => user.orders, {onDelete : 'SET NULL',nullable:true})
   @JoinColumn({ name: "user" })
-  user!: User;
+  user!: User|null;
 
   @Column({ type: "int" })
-  user_id!: number;
+  user_id!: number|null;
 
   @Column({ type: "decimal", precision: 10, scale: 2 })
   total_price!: number;

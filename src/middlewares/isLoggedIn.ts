@@ -19,10 +19,10 @@ interface JwtPayload {
 }
 
 export const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
-  try {
+
     const token = req.cookies?.token;
     if (!token) {
-      throw new ExpressError(404, "unauthorize access");
+      throw new ExpressError(404, "have to logged in first");
     }
     const sec = process.env.NODE_ENV_JWTSEC;
     if (!sec) {
@@ -39,9 +39,7 @@ export const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
       role: decoded.role,
     };
     next();
-  } catch (er) {
-    console.log(er);
-  }
+  
 };
 
 export const authorizeRoles = (...allowRoles: string[]) => {
